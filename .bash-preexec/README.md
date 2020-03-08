@@ -4,7 +4,7 @@ Bash-Preexec
 **preexec** and **precmd** hook functions for Bash in the style of Zsh. They aim to emulate the behavior as described for Zsh http://zsh.sourceforge.net/Doc/Release/Functions.html#Hook-Functions.
 
 
-##Quick Start
+## Quick Start
 ```bash
 # Pull down our file from github and write it to our home directory as a hidden file.
 curl https://raw.githubusercontent.com/rcaloras/bash-preexec/master/bash-preexec.sh > ~/.bash-preexec.sh
@@ -15,7 +15,7 @@ preexec() { echo "just typed $1"; }
 precmd() { echo "printing the prompt"; }
 ```
 
-##Install
+## Install
 You'll want to pull down the file and add it to your bash profile/configuration (i.e ~/.bashrc, ~/.profile, ~/.bash_profile, etc)
 ```bash
 # Pull down our file from github and write it to our home directory as a hidden file.
@@ -24,7 +24,7 @@ curl https://raw.githubusercontent.com/rcaloras/bash-preexec/master/bash-preexec
 echo '[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh' >> ~/.bashrc
 ```
 
-##Usage
+## Usage
 Two functions **preexec** and **precmd** can now be defined and they'll be automatically invoked by bash-preexec if they exist.
 
 * `preexec` Executed just after a command has been read and is about to be executed. The string that the user typed is passed as the first argument.
@@ -46,14 +46,14 @@ You can also define functions to be invoked by appending them to two different a
 * `$preexec_functions` Array of functions invoked by preexec.
 * `$precmd_functions` Array of functions invoked by precmd.
 
-####preexec
+#### preexec
 ```bash
 # Define some function to use preexec
 preexec_hello_world() { echo "You just entered $1"; }
 # Add it to the array of functions to be invoked each time.
 preexec_functions+=(preexec_hello_world)
 ```
-####precmd
+#### precmd
 ````bash
 precmd_hello_world() { echo "This is invoked before the prompt is displayed"; }
 precmd_functions+=(precmd_hello_world)
@@ -71,7 +71,7 @@ echo ${preexec_functions[@]}
 echo ${precmd_functions[@]} 
 ```
 
-##Tests
+## Tests
 You can run tests using https://github.com/sstephenson/bats.
 ```bash
 bats test
