@@ -54,7 +54,7 @@ preexec_hello_world() { echo "You just entered $1"; }
 preexec_functions+=(preexec_hello_world)
 ```
 #### precmd
-````bash
+```bash
 precmd_hello_world() { echo "This is invoked before the prompt is displayed"; }
 precmd_functions+=(precmd_hello_world)
 ```
