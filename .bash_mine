@@ -1,0 +1,26 @@
+#!/bin/bash
+#####################################################
+# This file should be sourced at the end of ~/.bashrc
+#
+#    if [ -f ~/.bash_mine ]; then
+#        . ~/.bash_mine
+#    fi
+#####################################################
+
+# Point to the locally built version of vim
+#export PATH=~/Programs/vim/build/bin:$PATH
+
+source ~/.bash_prompt
+# Using method in bash_prompt for this
+#PS1="\[\033[0;37m\]\n(\u@\h)-(\!)-(\T - \d)\[\033[0m\]\n(\w)\n\$ "
+
+alias ll='ls -la'
+#alias gvim='vim'
+#alias gvim="gvim 2>/dev/null"
+
+# Setup the shell in vi mode. See the help
+# on readline in the bash man pages.
+set -o vi
+bind -m vi-command "\C-h":beginning-of-line
+bind -m vi-command "\C-l":end-of-line
+

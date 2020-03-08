@@ -1,0 +1,166 @@
+#!/bin/bash
+###########
+
+source ~/.bash-preexec/bash-preexec.sh
+
+# Using a long variable name here to avoid global conflicts
+CUSTOM_PROMPT_PREVIOUS_COMMAND_START_TIME=0
+
+preexec()
+{
+    CUSTOM_PROMPT_PREVIOUS_COMMAND_START_TIME=`date +%s`
+}
+
+precmd()
+{
+    set_command_prompt
+}
+
+set_command_prompt()
+{
+    local PREVIOUS_RETURN_VALUE=$?
+
+    local NUM_COLS=`tput cols`
+
+    local MAX_PREVIOUS_COMMAND_LENGTH=50
+
+    local TOP_SPACER="┌─"
+    local MIDDLE_SPACER="├─"
+    local BOTTOM_SPACER="$" #"└─➤"
+
+    # PS1 color codes retrieved from here:
+    # http://unix.stackexchange.com/questions/124407/what-color-codes-can-i-use-in-my-ps1-prompt
+    local TOP_COLOR='\033[38;5;250m'
+    local ERROR_COLOR='\033[38;5;9m'
+    local SUCCESS_COLOR='\033[38;5;10m'
+    local NORMAL_COLOR='\033[0m'
+    local PWD_COLOR='\033[38;5;241m'   # 241-253
+    local GIT_STAGED_FILES_COLOR='\033[38;5;2m'
+    local GIT_MODIFIED_FILES_COLOR='\033[38;5;1m'
+
+    #####################
+    # Create the top line
+    #####################
+
+    echo -en "\n${TOP_COLOR}┌"
+
+    local x=5
+    while [ $x -lt $NUM_COLS ]; do
+        echo -en '─'
+        let x=$x+1
+    done
+
+    if [[ $PREVIOUS_RETURN_VALUE != 0 ]]; then
+        echo -en "(${ERROR_COLOR}✔"
+    else
+        echo -en "(${SUCCESS_COLOR}✔"
+    fi;
+    echo -en "${TOP_COLOR})─"
+
+    #######################################
+    # Create the last executed command line
+    #######################################
+
+    if [ $CUSTOM_PROMPT_PREVIOUS_COMMAND_START_TIME -ne 0 ]; then
+        local CURRENT_TIME=`date +%s`
+        local ELAPSED_TIME=0
+        let ELAPSED_TIME=$CURRENT_TIME-$CUSTOM_PROMPT_PREVIOUS_COMMAND_START_TIME
+        local ELAPSED_TIME_STRING=`date -u -d @${ELAPSED_TIME} +"%T"`
+
+        local LAST_COMMAND_STRING=$(history 1 | sed -e "s/^[ ]*[0-9]*[ ]*//g");
+
+        if [ ${#LAST_COMMAND_STRING} -gt $MAX_PREVIOUS_COMMAND_LENGTH ]; then
+            LAST_COMMAND_STRING=${LAST_COMMAND_STRING:0:$MAX_PREVIOUS_COMMAND_LENGTH}
+        fi;
+
+        LAST_COMMAND_STRING=${MIDDLE_SPACER}" Last Command: "${LAST_COMMAND_STRING}
+
+        local NUM_DOTS=0
+        let NUM_DOTS=${NUM_COLS}-${#LAST_COMMAND_STRING}-${#ELAPSED_TIME_STRING}
+
+        x=0
+        while [ $x -lt $NUM_DOTS ]; do
+            LAST_COMMAND_STRING=$LAST_COMMAND_STRING'.'
+            let x=$x+1
+        done
+
+        LAST_COMMAND_STRING=${LAST_COMMAND_STRING}${ELAPSED_TIME_STRING}
+        echo -en "\n${LAST_COMMAND_STRING}"
+    fi;
+
+    #####################
+    # Create the git line
+    #####################
+
+    if git branch 2>/dev/null 1>/dev/null; then
+        local GIT_BRANCH=$(git branch 2>/dev/null | grep \* |  cut -d " " -f 2);
+        local GIT_BRANCH_STRING=" Git Branch: ${GIT_BRANCH}"
+
+        local GIT_NUM_STAGED_FILES=`git diff --cached --numstat | wc -l`
+        local GIT_NUM_MODIFIED_FILES=`git diff --numstat | wc -l`
+        local GIT_FILES_STRING="modified($GIT_NUM_MODIFIED_FILES);staged($GIT_NUM_STAGED_FILES)"
+
+        local NUM_DOTS=0
+        let NUM_DOTS=${NUM_COLS}-${#MIDDLE_SPACER}-${#GIT_BRANCH_STRING}-${#GIT_FILES_STRING}
+
+        echo -en "\n${MIDDLE_SPACER}${GIT_BRANCH_STRING}"
+
+        x=0
+        while [ $x -lt $NUM_DOTS ]; do
+            echo -en '.'
+            let x=$x+1
+        done
+
+        if [ $GIT_NUM_MODIFIED_FILES -gt 0 ]; then
+            GIT_FILES_STRING=${GIT_FILES_STRING/"modified("/"modified($GIT_MODIFIED_FILES_COLOR"}
+            GIT_FILES_STRING=${GIT_FILES_STRING/");staged"/"$TOP_COLOR);staged"}
+        fi;
+
+        if [ $GIT_NUM_STAGED_FILES -gt 0 ]; then
+            GIT_FILES_STRING=${GIT_FILES_STRING/"staged("/"staged($GIT_STAGED_FILES_COLOR"}
+            GIT_FILES_STRING=${GIT_FILES_STRING/%")"/"$TOP_COLOR)"}
+        fi;
+
+        echo -en "${GIT_FILES_STRING}"
+    fi;
+
+    ###################################
+    # Create the current directory line
+    ###################################
+
+    local CURRENT_DATE_STRING=`date +%r`
+    local PWD_STRING=`pwd`
+    PWD_STRING=${PWD_STRING/#$HOME/"~"}
+    PWD_STRING=" ${PWD_STRING} "
+
+    local NUM_SPACES=0
+    let NUM_SPACES=${NUM_COLS}-${#MIDDLE_SPACER}-${#PWD_STRING}-${#CURRENT_DATE_STRING}
+
+    echo -en "\n${MIDDLE_SPACER}${PWD_COLOR}${PWD_STRING}${TOP_COLOR}"
+
+    local x=0
+    while [ $x -lt $NUM_SPACES ]; do
+        echo -en ' '
+        let x=$x+1
+    done
+
+    echo -en "${CURRENT_DATE_STRING}"
+
+    ########################
+    # Create the bottom line
+    ########################
+
+    local x=2
+    echo -en "\n$MIDDLE_SPACER"
+    while [ $x -lt $NUM_COLS ]; do
+        echo -en '─'
+        let x=$x+1
+    done
+
+    ##########################################################
+    # Create the last line (corresponds to the command prompt) 
+    ##########################################################
+
+    PS1="\[$NORMAL_COLOR\]${BOTTOM_SPACER} "
+}
+
